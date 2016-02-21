@@ -1,89 +1,60 @@
-// So the ideal here would be to do a few things.
-// Dynamically grab the number of sections in a page (I don't think that would be hard)
-// Put a data attributes (in terms of RGB color) into an array (it doesn't matter what size)
-// -- (You'd probably start with a 'real' background color, as set in CSS? or maybe this would override it
-// So you have an array of colors
-// [{255,0,0},{255,255,0},]
+var currentScrollPos; // holds the currentScrollPos
+var colorSectionArray = []; // holds the set of colorSection objects
+var currentSection; // holds the # of the current section (really for debugging right?)
+var currentColor; // holds the current color as a string
 
-// The complex part would be finding the height of each section, right?
-// So instead of taking the FULL height of the page;
-// You're finding the DIFF with the height of each SECTION
-// Your increment changes based on the section
-
-// So the SCROLL logic becomes more complex too
-// I don't know if you want a 'state machine'
-// Or whether there can be an easy "current increment" based on the current section
-
-// this is probably more than I can bite off for tonight
-
-
-
-// ===
-
-// 1. Count number of sections.
-// 2. Create two arrays of the same length: 1) hex numbers of each section. 2) 'top' offset of each section (for finding diffs)
-// 		** this is starting to feel like I should just create a custom object with several properties
-//		** colorSection.hex ... colorSection.r ... colorSection.g ... colorSection.b ... colorSection.top ... maybe colorSection.height
-//		** then, work from the ARRAY of 
-// 3. Convert hex numbers to RGB values (using regex, essentially): http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-// 4. Create a NEW array
-
-
-
-
-
-
-
-
-
-
-
-// Global variables
-
-// Starting 'coordinates'
-var startR = 150;
-var startG = 0;
-var startB = 0;
-
-// Ending coordinates (for calculations)
-var finishR = 150;
-var finishG = 255;
-var finishB = 255;
-
-// Total height of the page
-var outerHeight;
-
-// The current scroll position
-var currentScrollPos;
-var currentColor;
-
-// The increment, in the form of an array
-var increment;
-
-// On beginning, calculate the total height of the page
 $(document).ready(function(){
 
-	// What's the total height?
-	outerHeight = $(document).outerHeight();
-	console.log('outerHeight is ' + outerHeight);
+	// Am I in?
+	console.log('revised.js running');
 
-	// Let's say we want to do ONE transition
-	// From the top of the page to the bottom of the page.
+	// How many sections?
+	var numberOfSections = $('section').length;
+	console.log('number of sections:' + numberOfSections);
 
-	// Start with RED rgb(255,0,0)
-	// Turn to YELLOW rgb(255,255,0)
+	// Actually, instead of using that array to just hold the hex values
+	// create an array of objects and populate certain properties about them
 
-	// Set the initial page color
-	currentColor = 'rgb('+startR+','+startG+','+startB+')';
-	$('body').css('background-color',currentColor);
+	// Iterate over each section and assign certain values
+	for(var i = 0; i < numberOfSections; i++){
 
-	// Get the difference between start and finish,
-	// then divide by the total number of pixels.
-	// this returns an array of length 3 (i.e. rgb)
-	// with the correct increment values to add as you scroll
-	// Now, Set color on the page;
-	increment = FindIncrement(GetDifference());
+		// create a colorSection
+		colorSectionArray[i] = new colorSection();
 
+		// assign the section number
+		colorSectionArray[i].sectionNumber = i+1;
+
+		// grab the top pixel value
+		colorSectionArray[i].sectionTop = $('section:nth-of-type('+(i+1)+')').offset().top;
+
+		// grab the height of the section in px
+		colorSectionArray[i].sectionHeight = $('section:nth-of-type('+(i+1)+')').outerHeight();
+
+		// grab its hex value, as displayed on the HTML element
+		colorSectionArray[i].hex = $('section:nth-of-type('+(i+1)+')').data("hex");
+
+		console.log('Section #' + colorSectionArray[i].sectionNumber + ' is color ' + colorSectionArray[i].hex + ', is located at ' + colorSectionArray[i].sectionTop + ', and has height ' + colorSectionArray[i].sectionHeight + '.');
+
+	}
+
+	// Now let's convert those hex values and populate the 'r,g,b' values
+	for(var j = 0; j < colorSectionArray.length; j++) {
+		
+		// assign the result values to the colorSection object
+		colorSectionArray[j].r = hexToRgb(colorSectionArray[j].hex).r;
+		colorSectionArray[j].g = hexToRgb(colorSectionArray[j].hex).g;
+		colorSectionArray[j].b = hexToRgb(colorSectionArray[j].hex).b;
+
+		// proof it
+		console.log('Section #' + colorSectionArray[j].sectionNumber + ' with hex ' + colorSectionArray[j].hex + 'has rgb values of (' + colorSectionArray[j].r + ', ' + colorSectionArray[j].g + ', ' + colorSectionArray[j].b + ').' )
+
+	}
+
+	// Find the increments for each section
+	GetDifferenceSetIncrement();
+
+	// Initialize the color
+	InitializePageColor();
 
 });
 
@@ -91,74 +62,111 @@ $(document).ready(function(){
 $(document).scroll(function(){
 
 	GetScrollPos();
-	SetColor();
+	SetColor(currentSection-1);
 
 });
 
-// Find the difference between the start and finish;
-function GetDifference() {
 
-	var diffR = finishR - startR;
-	var diffG = finishG - startG;
-	var diffB = finishB - startB;
+// Class constructor for colorSection object
+function colorSection(sectionNumber, hex, r, g, b, sectionTop, sectionHeight, increment) {
 
-	var difference = [diffR, diffG, diffB];
-	console.log('Difference: ' + difference[0] + ',' + difference[1] + ',' + difference[2]);
-
-	return difference;
+	this.sectionNumber = sectionNumber;
+	this.hex = hex;
+	this.r = r;
+	this.g = g;
+	this.b = b;
+	this.sectionTop = sectionTop;
+	this.sectionHeight = sectionHeight;
+	this.increment = increment;
 
 }
 
-function FindIncrement(diffArray) {
-
-	var incrementArray = diffArray;
-
-	//Divide each increment by the number of pixels;
-
-	for(i = 0; i < incrementArray.length; i++) {
-
-		diffArray[i] = diffArray[i] / outerHeight;
-		//console.log(diffArray[i]);
-	
-	}
-
-	return incrementArray;
-
+// Hex to RGB Conversion
+// From http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
 }
 
 function GetScrollPos() {
 
 	currentScrollPos = $('nav').offset().top;
-	console.log('currentScrollPos is ' + currentScrollPos);
+	console.log('currentScrollPos: ' + currentScrollPos);
+
+	// which section am I in?
+	for (var k = 0; k < colorSectionArray.length; k++) {
+
+		if (currentScrollPos > colorSectionArray[k].sectionTop && currentScrollPos <= (colorSectionArray[k].sectionTop + colorSectionArray[k].sectionHeight)) {
+
+			currentSection = colorSectionArray[k].sectionNumber;
+			console.log('Current section is ' + currentSection);
+
+		}
+
+	}
 
 }
 
-function SetColor() {
+
+function GetDifferenceSetIncrement() {
+
+	// for each section, find the rgb difference
+	// perform calculations
+	// and set the increment value in the object
+	for (var l = 0; l < colorSectionArray.length-1; l++) {
+
+		// find the difference
+		var diff = [
+			colorSectionArray[l+1].r - colorSectionArray[l].r,
+			colorSectionArray[l+1].g - colorSectionArray[l].g,
+			colorSectionArray[l+1].b - colorSectionArray[l].b
+		]
+
+		// DEBUG
+		console.log('Diff is ' + diff)
+
+		// divide the difference by the section height to get the increment
+		// and assign it back to the object
+		colorSectionArray[l].increment = [
+			(diff[0] / colorSectionArray[l].sectionHeight),
+			(diff[1] / colorSectionArray[l].sectionHeight),
+			(diff[2] / colorSectionArray[l].sectionHeight)
+		]
+
+		// DEBUG
+		console.log('Incr is ' + colorSectionArray[l].increment);
+
+
+	}
+
+}
+
+function InitializePageColor() {
+
+	currentColor = 'rgb('+colorSectionArray[0].r+','+colorSectionArray[0].g+','+colorSectionArray[0].b+')';
+	console.log(currentColor);
+	$('body').css('background-color',currentColor);
+
+}
+
+function SetColor(thisSection) {
+
+	// variable to store the difference between the top of the section and the scrollposition
+	// so we know how much increment to add
+	var topDiff = currentScrollPos - colorSectionArray[thisSection].sectionTop;
+	console.log('topDiff = ' + topDiff);
 
 	// Set the page color: pixels times increment
-
-	var currentR = (startR + (currentScrollPos * increment[0])).toFixed(0);
-	var currentG = (startG + (currentScrollPos * increment[1])).toFixed(0);
-	var currentB = (startB + (currentScrollPos * increment[2])).toFixed(0);
+	var currentR = (colorSectionArray[thisSection].r + (topDiff * colorSectionArray[thisSection].increment[0])).toFixed(0);
+	var currentG = (colorSectionArray[thisSection].g + (topDiff * colorSectionArray[thisSection].increment[1])).toFixed(0);
+	var currentB = (colorSectionArray[thisSection].b + (topDiff * colorSectionArray[thisSection].increment[2])).toFixed(0);
 
 	currentColor = 'rgb('+currentR+','+currentG+','+currentB+')';
 	console.log(currentColor);
 	$('body').css('background-color',currentColor);
 
 }
-
-
-// Find the difference between each one
-// Divide by the number of pixels; this should be the increment per pixel
-// On scroll, add the correct increment
-
-
-
-
-
-
-
-
-
-
-
