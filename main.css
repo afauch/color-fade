@@ -1,0 +1,13 @@
+section {
+	height: 100vh;
+	border-top: solid 1px #FF0000;
+	max-width: 400px;
+	margin: 0 auto;
+	padding-top: 20vh;
+}
+
+nav {
+	position: fixed;
+	top: 0;
+	display: none;
+}
