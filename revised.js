@@ -3,7 +3,7 @@
 var currentScrollPos; // holds the currentScrollPos
 var colorSectionArray = []; // holds the set of colorSection objects
 var currentSection; // holds the # of the current section (really for debugging right?)
-
+var currentColor; // holds the current color as a string
 
 $(document).ready(function(){
 
@@ -56,7 +56,7 @@ $(document).ready(function(){
 	GetDifferenceSetIncrement();
 
 	// Initialize the color
-	SetColor(0);
+	InitializePageColor();
 
 });
 
@@ -144,6 +144,14 @@ function GetDifferenceSetIncrement() {
 
 
 	}
+
+}
+
+function InitializePageColor() {
+
+	currentColor = 'rgb('+colorSectionArray[0].r+','+colorSectionArray[0].g+','+colorSectionArray[0].b+')';
+	console.log(currentColor);
+	$('body').css('background-color',currentColor);
 
 }
 
