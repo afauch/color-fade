@@ -46,7 +46,7 @@ $(document).ready(function(){
 		colorSectionArray[j].b = hexToRgb(colorSectionArray[j].hex).b;
 
 		// proof it
-		console.log('Section #' + colorSectionArray[j].sectionNumber + ' with hex ' + colorSectionArray[j].hex + 'has rgb values of (' + colorSectionArray[j].r + ', ' + colorSectionArray[j].g + ', ' + colorSectionArray[j].b + ').' )
+		console.log('Section #' + colorSectionArray[j].sectionNumber + ' with hex ' + colorSectionArray[j].hex + 'has rgb values of (' + colorSectionArray[j].r + ', ' + colorSectionArray[j].g + ', ' + colorSectionArray[j].b + ').' );
 
 	}
 
@@ -124,10 +124,10 @@ function GetDifferenceSetIncrement() {
 			colorSectionArray[l+1].r - colorSectionArray[l].r,
 			colorSectionArray[l+1].g - colorSectionArray[l].g,
 			colorSectionArray[l+1].b - colorSectionArray[l].b
-		]
+		];
 
 		// DEBUG
-		console.log('Diff is ' + diff)
+		console.log('Diff is ' + diff);
 
 		// divide the difference by the section height to get the increment
 		// and assign it back to the object
@@ -135,7 +135,7 @@ function GetDifferenceSetIncrement() {
 			(diff[0] / colorSectionArray[l].sectionHeight),
 			(diff[1] / colorSectionArray[l].sectionHeight),
 			(diff[2] / colorSectionArray[l].sectionHeight)
-		]
+		];
 
 		// DEBUG
 		console.log('Incr is ' + colorSectionArray[l].increment);
